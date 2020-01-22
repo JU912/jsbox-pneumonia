@@ -197,7 +197,8 @@ exports.init = () => {
 }
 
 async function refresh() {
-  const {data} = await $http.get("http://3g.dxy.cn/newh5/view/pneumonia");
+  const api = "https://3g.dxy.cn/newh5/view/pneumonia_peopleapp";
+  const {data} = await $http.get(api);
   const doc = cheerio.load(data);
 
   const getListByCountryTypeService1 = doc("#getListByCountryTypeService1").html();
