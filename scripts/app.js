@@ -182,7 +182,9 @@ exports.init = () => {
         events: {
           didSelect: (sender, indexPath, data) => {
             const link = data.link;
-            $app.openURL(link);
+            $safari.open({
+              url: link
+            });
           }
         }
       }
