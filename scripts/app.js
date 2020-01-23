@@ -6,6 +6,7 @@ const primaryTextColor = (isTodayWidget && isDarkMode) ? $color("white") : $colo
 const secondaryTextColor = (isTodayWidget && isDarkMode) ? $color("gray") : $color("text");
 
 let mapView = null;
+let resultView = null;
 let timelineView = null;
 
 exports.init = () => {
@@ -28,9 +29,10 @@ exports.init = () => {
       navButtons: [
         {
           symbol: "arrow.clockwise.circle",
-          handler: () => {
+          handler: async() => {
             $device.taptic(1);
-            refresh();
+            await refresh();
+            $ui.toast("刷新成功");
           }
         }
       ]
@@ -43,14 +45,14 @@ exports.init = () => {
         },
         layout: (make, view) => {
           make.left.top.right.equalTo(0);
-          make.height.equalTo(44);
+          make.height.equalTo(60);
         },
         views: [
           {
             type: "label",
             props: {
               id: "ts-label",
-              font: $font(14),
+              font: $font(13),
               textColor: secondaryTextColor,
               align: $align.center
             },
@@ -64,12 +66,12 @@ exports.init = () => {
             props: {
               id: "confirmed-label",
               textColor: secondaryTextColor,
-              font: $font(14),
-              align: $align.center,
-              autoFontSize: true
+              font: $font(13),
+              lines: 2
             },
             layout: (make, view) => {
-              make.left.right.bottom.inset(5);
+              make.left.right.inset(15);
+              make.bottom.inset(5);
             }
           }
         ]
@@ -85,49 +87,72 @@ exports.init = () => {
         },
         views: [
           {
-            type: "image",
-            props: {
-              id: "map-image-view",
-              contentMode: $contentMode.scaleAspectFit
-            },
-            layout: (make, view) => {
-              make.top.equalTo(0);
-              make.left.right.equalTo(0);
-              make.height.equalTo(isTodayWidget ? 0 : 200);
-            },
-            events: {
-              tapped: sender => {
-                $device.taptic(1);
-                $quicklook.open({
-                  image: sender.image
-                });
-              }
-            }
-          },
-          {
             type: "list",
-            props: {
-              id: "result-list",
-              rowHeight: isTodayWidget ? 32 : 44,
-              separatorColor: isTodayWidget ? $rgba(100, 100, 100, 0.25) : $color("separator"),
-              template: [
-                {
-                  type: "label",
-                  props: {
-                    id: "result-label",
-                    textColor: primaryTextColor,
-                    autoFontSize: true
-                  },
-                  layout: (make, view) => {
-                    make.left.right.inset(15);
-                    make.centerY.equalTo(view.super);
+            props: (() => {
+              const props = {
+                id: "result-view",
+                rowHeight: isTodayWidget ? 32 : 44,
+                separatorColor: isTodayWidget ? $rgba(100, 100, 100, 0.25) : $color("separator"),
+                selectable: isTodayWidget,
+                template: [
+                  {
+                    type: "label",
+                    props: {
+                      id: "result-label",
+                      font: $font(isTodayWidget ? 13 : 17),
+                      textColor: primaryTextColor,
+                      lines: 2
+                    },
+                    layout: (make, view) => {
+                      make.left.right.inset(15);
+                      make.centerY.equalTo(view.super);
+                    }
                   }
-                }
-              ]
-            },
+                ]
+              }
+              if (!isTodayWidget) {
+                props["header"] = {
+                  type: "image",
+                  props: {
+                    id: "map-image-view",
+                    contentMode: $contentMode.scaleAspectFit,
+                    height: 200
+                  },
+                  events: {
+                    tapped: sender => {
+                      $device.taptic(1);
+                      $quicklook.open({
+                        image: sender.image
+                      });
+                    }
+                  },
+                  views: [
+                    {
+                      type: "button",
+                      props: {
+                        symbol: "arrow.up.left.and.arrow.down.right",
+                        bgcolor: $color("clear")
+                      },
+                      layout: (make, view) => {
+                        make.top.left.equalTo(view.super).inset(8);
+                      },
+                      events: {
+                        tapped: () => {
+                          $device.taptic(1);
+                          $quicklook.open({
+                            image: $("map-image-view").image
+                          });
+                        }
+                      }
+                    }
+                  ]
+                };
+              }
+              return props;
+            })(),
             layout: (make, view) => {
-              make.top.equalTo($("map-image-view").bottom);
-              make.left.right.bottom.equalTo(0);
+              make.top.equalTo($("header-view").bottom);
+              make.left.bottom.right.equalTo(0);
             },
             events: {
               tapped: () => {
@@ -136,7 +161,8 @@ exports.init = () => {
                   const url = `jsbox://run?name=${name}`;
                   $app.openURL(url);
                 }
-              }
+              },
+              pulled: refresh
             }
           }
         ]
@@ -185,19 +211,21 @@ exports.init = () => {
             $safari.open({
               url: link
             });
-          }
+          },
+          pulled: refresh
         }
       }
     ]
   });
 
   mapView = $("map-view");
+  resultView = $("result-view");
   timelineView = $("timeline-view");
   refresh();
 }
 
 async function refresh() {
-  const api = "https://3g.dxy.cn/newh5/view/pneumonia_peopleapp";
+  const api = "https://3g.dxy.cn/newh5/view/pneumonia";
   const {data} = await $http.get(api);
   const doc = cheerio.load(data);
 
@@ -214,7 +242,9 @@ async function refresh() {
   $("confirmed-label").text = confirmedNumber;
 
   const listByCountryTypeService1 = window.getListByCountryTypeService1;
-  $("result-list").data = listByCountryTypeService1.map(x => {
+  resultView.data = listByCountryTypeService1.sort((lhs, rhs) => {
+    return lhs.sort - rhs.sort;
+  }).map(x => {
     return {
       "result-label": {
         "text": `${x.provinceName} ${x.tags}`
@@ -238,7 +268,8 @@ async function refresh() {
         "link": x.sourceUrl
       }
     });
-
-    $ui.toast("更新成功");
   }
+
+  resultView.endRefreshing();
+  timelineView.endRefreshing();
 }
