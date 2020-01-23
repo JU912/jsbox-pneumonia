@@ -1,5 +1,5 @@
 const cheerio = require("../libs/cheerio");
-const isTodayWidget = $app.env == $env.today;
+const isTodayWidget = $objc("EnvKit").$isWidgetExtension();
 const isDarkMode = $device.isDarkMode;
 
 const primaryTextColor = (isTodayWidget && isDarkMode) ? $color("white") : $color("darkText");
@@ -41,119 +41,117 @@ exports.init = () => {
       {
         type: "view",
         props: {
-          id: "header-view"
-        },
-        layout: (make, view) => {
-          make.left.top.right.equalTo(0);
-          make.height.equalTo(60);
-        },
-        views: [
-          {
-            type: "label",
-            props: {
-              id: "ts-label",
-              font: $font(13),
-              textColor: secondaryTextColor,
-              align: $align.center
-            },
-            layout: (make, view) => {
-              make.centerX.equalTo(view.super);
-              make.top.equalTo(5);
-            }
-          },
-          {
-            type: "label",
-            props: {
-              id: "confirmed-label",
-              textColor: secondaryTextColor,
-              font: $font(13),
-              lines: 2
-            },
-            layout: (make, view) => {
-              make.left.right.inset(15);
-              make.bottom.inset(5);
-            }
-          }
-        ]
-      },
-      {
-        type: "view",
-        props: {
           id: "map-view"
         },
-        layout: (make, view) => {
-          make.top.equalTo($("header-view").bottom);
-          make.left.bottom.right.equalTo(0);
-        },
+        layout: $layout.fill,
         views: [
           {
             type: "list",
-            props: (() => {
-              const props = {
-                id: "result-view",
-                rowHeight: isTodayWidget ? 32 : 44,
-                separatorColor: isTodayWidget ? $rgba(100, 100, 100, 0.25) : $color("separator"),
-                selectable: isTodayWidget,
-                template: [
-                  {
+            props: {
+              id: "result-view",
+              rowHeight: isTodayWidget ? 32 : 44,
+              separatorColor: isTodayWidget ? $rgba(100, 100, 100, 0.25) : $color("separator"),
+              selectable: isTodayWidget,
+              header: {
+                type: "view",
+                props: {
+                  height: isTodayWidget ? 54 : 264
+                },
+                views: (() => {
+                  const views = [
+                    {
+                      type: "label",
+                      props: {
+                        id: "ts-label",
+                        textColor: secondaryTextColor,
+                        font: $font(13),
+                        align: $align.center
+                      },
+                      layout: (make, view) => {
+                        make.centerX.equalTo(view.super);
+                        make.top.equalTo(0);
+                        make.height.equalTo(20);
+                      }
+                    }
+                  ];
+                  if (!isTodayWidget) {
+                    views.push({
+                      type: "image",
+                      props: {
+                        id: "map-image-view",
+                        contentMode: $contentMode.scaleAspectFit
+                      },
+                      layout: (make, view) => {
+                        make.left.right.equalTo(0);
+                        make.top.equalTo(20);
+                        make.height.equalTo(200);
+                      },
+                      events: {
+                        tapped: sender => {
+                          $device.taptic(1);
+                          $quicklook.open({
+                            image: sender.image
+                          });
+                        }
+                      },
+                      views: [
+                        {
+                          type: "button",
+                          props: {
+                            symbol: "arrow.up.left.and.arrow.down.right",
+                            bgcolor: $color("clear")
+                          },
+                          layout: (make, view) => {
+                            make.top.equalTo(5);
+                            make.left.equalTo(15);
+                          },
+                          events: {
+                            tapped: () => {
+                              $device.taptic(1);
+                              $quicklook.open({
+                                image: $("map-image-view").image
+                              });
+                            }
+                          }
+                        }
+                      ]
+                    });
+                  }
+                  views.push({
                     type: "label",
                     props: {
-                      id: "result-label",
-                      font: $font(isTodayWidget ? 13 : 17),
-                      textColor: primaryTextColor,
-                      lines: 2
+                      id: "confirmed-label",
+                      textColor: secondaryTextColor,
+                      font: $font(13),
+                      align: $align.center,
+                      autoFontSize: true
                     },
                     layout: (make, view) => {
                       make.left.right.inset(15);
-                      make.centerY.equalTo(view.super);
+                      make.bottom.equalTo(0);
+                      make.height.equalTo(44);
                     }
-                  }
-                ]
-              }
-              if (!isTodayWidget) {
-                props["header"] = {
-                  type: "image",
+                  });
+                  return views;
+                })()
+              },
+              template: [
+                {
+                  type: "label",
                   props: {
-                    id: "map-image-view",
-                    contentMode: $contentMode.scaleAspectFit,
-                    height: 200
+                    id: "result-label",
+                    font: $font(isTodayWidget ? 13 : 17),
+                    textColor: primaryTextColor,
+                    lines: 2
                   },
-                  events: {
-                    tapped: sender => {
-                      $device.taptic(1);
-                      $quicklook.open({
-                        image: sender.image
-                      });
-                    }
-                  },
-                  views: [
-                    {
-                      type: "button",
-                      props: {
-                        symbol: "arrow.up.left.and.arrow.down.right",
-                        bgcolor: $color("clear")
-                      },
-                      layout: (make, view) => {
-                        make.top.left.equalTo(view.super).inset(8);
-                      },
-                      events: {
-                        tapped: () => {
-                          $device.taptic(1);
-                          $quicklook.open({
-                            image: $("map-image-view").image
-                          });
-                        }
-                      }
-                    }
-                  ]
-                };
-              }
-              return props;
-            })(),
-            layout: (make, view) => {
-              make.top.equalTo($("header-view").bottom);
-              make.left.bottom.right.equalTo(0);
+                  layout: (make, view) => {
+                    make.left.right.inset(15);
+                    make.centerY.equalTo(view.super);
+                  }
+                }
+              ]
             },
+            layout: $layout.fill,
             events: {
               tapped: () => {
                 if (isTodayWidget) {
@@ -201,10 +199,7 @@ exports.init = () => {
           ],
           hidden: true
         },
-        layout: (make, view) => {
-          make.top.equalTo($("header-view").bottom);
-          make.left.bottom.right.equalTo(0);
-        },
+        layout: $layout.fill,
         events: {
           didSelect: (sender, indexPath, data) => {
             const link = data.link;
