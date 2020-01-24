@@ -1,3 +1,4 @@
+const api = "https://3g.dxy.cn/newh5/view/pneumonia";
 const cheerio = require("../libs/cheerio");
 const isTodayWidget = $objc("EnvKit").$isWidgetExtension();
 const isDarkMode = $device.isDarkMode;
@@ -55,7 +56,7 @@ exports.init = () => {
               header: {
                 type: "view",
                 props: {
-                  height: isTodayWidget ? 54 : 264
+                  height: isTodayWidget ? 54 : 304
                 },
                 views: (() => {
                   const views = [
@@ -79,12 +80,13 @@ exports.init = () => {
                       type: "image",
                       props: {
                         id: "map-image-view",
+                        bgcolor: $color("#f3f3f3"),
                         contentMode: $contentMode.scaleAspectFit
                       },
                       layout: (make, view) => {
                         make.left.right.equalTo(0);
                         make.top.equalTo(20);
-                        make.height.equalTo(200);
+                        make.height.equalTo(240);
                       },
                       events: {
                         tapped: sender => {
@@ -95,6 +97,34 @@ exports.init = () => {
                         }
                       },
                       views: [
+                        {
+                          type: "web",
+                          props: {
+                            url: api,
+                            hidden: true
+                          },
+                          layout: $layout.fill,
+                          events: {
+                            didFinish: sender => {
+                              const timer = setInterval(async() => {
+                                const script = `(() => {
+                                  const canvas = document.querySelector("canvas");
+                                  if (canvas) {
+                                    return canvas.toDataURL("image/png");
+                                  } else {
+                                    return null;
+                                  }
+                                })();`;
+                                const dataURL = (await sender.eval(script))[0];
+                                if (dataURL) {
+                                  timer.invalidate();
+                                  sender.remove();
+                                  $("map-image-view").src = dataURL;
+                                }
+                              }, 200);
+                            }
+                          }
+                        },
                         {
                           type: "button",
                           props: {
@@ -124,7 +154,7 @@ exports.init = () => {
                       textColor: secondaryTextColor,
                       font: $font(13),
                       align: $align.center,
-                      autoFontSize: true
+                      lines: 2
                     },
                     layout: (make, view) => {
                       make.left.right.inset(15);
@@ -220,7 +250,6 @@ exports.init = () => {
 }
 
 async function refresh() {
-  const api = "https://3g.dxy.cn/newh5/view/pneumonia";
   const {data} = await $http.get(api);
   const doc = cheerio.load(data);
 
@@ -248,9 +277,6 @@ async function refresh() {
   });
 
   if (!isTodayWidget) {
-    const mapImg = doc("img[class^='mapImg']").attr("src");
-    $("map-image-view").src = mapImg;
-
     const timelineService = window.getTimelineService;
     timelineView.data = timelineService.map(x => {
       return {
