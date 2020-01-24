@@ -251,7 +251,7 @@ async function refresh() {
     const mapImg = doc("img[class^='mapImg']").attr("src");
     $("map-image-view").src = mapImg;
 
-    const timelineService = window.getTimelineService.result;
+    const timelineService = window.getTimelineService;
     timelineView.data = timelineService.map(x => {
       return {
         "title-label": {
