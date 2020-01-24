@@ -7,9 +7,9 @@ const isDarkMode = $device.isDarkMode;
 const primaryTextColor = (isTodayWidget && isDarkMode) ? $color("white") : $color("darkText");
 const secondaryTextColor = (isTodayWidget && isDarkMode) ? $color("gray") : $color("text");
 
-let mapView = null;
 let resultView = null;
 let timelineView = null;
+let rumourView = null;
 
 exports.init = () => {
 
@@ -19,12 +19,13 @@ exports.init = () => {
         type: "tab",
         props: {
           bgcolor: $rgb(240, 240, 240),
-          items: ["疫情地图", "实时播报"]
+          items: ["疫情", "播报", "辟谣"]
         },
         events: {
           changed: sender => {
-            mapView.hidden = sender.index === 1;
-            timelineView.hidden = !mapView.hidden;
+            resultView.hidden = sender.index !== 0;
+            timelineView.hidden = sender.index !== 1;
+            rumourView.hidden = sender.index !== 2;
           }
         }
       },
@@ -41,186 +42,177 @@ exports.init = () => {
     },
     views: [
       {
-        type: "view",
+        type: "list",
         props: {
-          id: "map-view"
-        },
-        layout: $layout.fill,
-        views: [
-          {
-            type: "list",
+          id: "result-view",
+          rowHeight: isTodayWidget ? 32 : 44,
+          separatorColor: isTodayWidget ? $rgba(100, 100, 100, 0.25) : $color("separator"),
+          header: {
+            type: "view",
             props: {
-              id: "result-view",
-              rowHeight: isTodayWidget ? 32 : 44,
-              separatorColor: isTodayWidget ? $rgba(100, 100, 100, 0.25) : $color("separator"),
-              header: {
-                type: "view",
-                props: {
-                  height: isTodayWidget ? 54 : 304
-                },
-                views: (() => {
-                  const views = [
-                    {
-                      type: "label",
-                      props: {
-                        id: "ts-label",
-                        textColor: secondaryTextColor,
-                        font: $font(13),
-                        align: $align.center
-                      },
-                      layout: (make, view) => {
-                        make.centerX.equalTo(view.super);
-                        make.top.equalTo(0);
-                        make.height.equalTo(20);
-                      }
-                    }
-                  ];
-                  if (!isTodayWidget) {
-                    views.push({
-                      type: "image",
-                      props: {
-                        id: "map-image-view",
-                        bgcolor: $color("#f3f3f3"),
-                        contentMode: $contentMode.scaleAspectFit
-                      },
-                      layout: (make, view) => {
-                        make.left.right.equalTo(0);
-                        make.top.equalTo(20);
-                        make.height.equalTo(240);
-                      },
-                      events: {
-                        tapped: sender => {
-                          $device.taptic(1);
-                          $quicklook.open({
-                            image: sender.image
-                          });
-                        }
-                      },
-                      views: [
-                        {
-                          type: "web",
-                          props: {
-                            url: api,
-                            hidden: true
-                          },
-                          layout: $layout.fill,
-                          events: {
-                            didFinish: sender => {
-                              const timer = setInterval(async() => {
-                                const script = `(() => {
-                                  const canvas = document.querySelector("canvas");
-                                  if (canvas) {
-                                    return canvas.toDataURL("image/png");
-                                  } else {
-                                    return null;
-                                  }
-                                })();`;
-                                const dataURL = (await sender.eval(script))[0];
-                                if (dataURL) {
-                                  timer.invalidate();
-                                  sender.remove();
-                                  $("map-image-view").src = dataURL;
-                                }
-                              }, 200);
-                            }
-                          }
-                        },
-                        {
-                          type: "button",
-                          props: {
-                            symbol: "arrow.up.left.and.arrow.down.right",
-                            bgcolor: $color("clear")
-                          },
-                          layout: (make, view) => {
-                            make.top.equalTo(5);
-                            make.left.equalTo(15);
-                          },
-                          events: {
-                            tapped: () => {
-                              $device.taptic(1);
-                              $quicklook.open({
-                                image: $("map-image-view").image
-                              });
-                            }
-                          }
-                        }
-                      ]
-                    });
-                  }
-                  views.push({
-                    type: "label",
-                    props: {
-                      id: "confirmed-label",
-                      textColor: secondaryTextColor,
-                      font: $font(13),
-                      align: $align.center,
-                      lines: 2
-                    },
-                    layout: (make, view) => {
-                      make.left.right.inset(15);
-                      make.bottom.equalTo(0);
-                      make.height.equalTo(44);
-                    }
-                  });
-                  return views;
-                })()
-              },
-              template: [
+              height: isTodayWidget ? 54 : 304
+            },
+            views: (() => {
+              const views = [
                 {
                   type: "label",
                   props: {
-                    id: "result-label",
-                    font: $font(isTodayWidget ? 13 : 17),
-                    textColor: primaryTextColor,
-                    lines: 2
+                    id: "ts-label",
+                    textColor: secondaryTextColor,
+                    font: $font(13),
+                    align: $align.center
                   },
                   layout: (make, view) => {
-                    make.left.inset(15);
-                    make.right.inset(40);
-                    make.centerY.equalTo(view.super);
+                    make.centerX.equalTo(view.super);
+                    make.top.equalTo(0);
+                    make.height.equalTo(20);
                   }
-                },
-                {
+                }
+              ];
+              if (!isTodayWidget) {
+                views.push({
                   type: "image",
                   props: {
-                    symbol: "chevron.right",
-                    tintColor: $color("gray")
+                    id: "map-image-view",
+                    bgcolor: $color("#f3f3f3"),
+                    contentMode: $contentMode.scaleAspectFit
                   },
                   layout: (make, view) => {
-                    make.right.inset(15);
-                    make.centerY.equalTo(view.super);
-                  }
-                }
-              ]
-            },
-            layout: $layout.fill,
-            events: {
-              didSelect: (sender, indexPath, data) => {
-                if (isTodayWidget) {
-                  const name = encodeURIComponent($addin.current.name);
-                  const url = `jsbox://run?name=${name}`;
-                  $app.openURL(url);
-                } else {
-                  $ui.push({
-                    props: {
-                      title: data.province
-                    },
-                    views: [
-                      {
-                        type: "list",
-                        props: {
-                          data: data.cities.map(x => `${x.cityName} ${helper.format(x)}`)
-                        },
-                        layout: $layout.fill
+                    make.left.right.equalTo(0);
+                    make.top.equalTo(20);
+                    make.height.equalTo(240);
+                  },
+                  events: {
+                    tapped: sender => {
+                      $device.taptic(1);
+                      $quicklook.open({
+                        image: sender.image
+                      });
+                    }
+                  },
+                  views: [
+                    {
+                      type: "web",
+                      props: {
+                        url: api,
+                        hidden: true
+                      },
+                      layout: $layout.fill,
+                      events: {
+                        didFinish: sender => {
+                          const timer = setInterval(async() => {
+                            const script = `(() => {
+                              const canvas = document.querySelector("canvas");
+                              if (canvas) {
+                                return canvas.toDataURL("image/png");
+                              } else {
+                                return null;
+                              }
+                            })();`;
+                            const dataURL = (await sender.eval(script))[0];
+                            if (dataURL) {
+                              timer.invalidate();
+                              sender.remove();
+                              $("map-image-view").src = dataURL;
+                            }
+                          }, 200);
+                        }
                       }
-                    ]
-                  });
+                    },
+                    {
+                      type: "button",
+                      props: {
+                        symbol: "arrow.up.left.and.arrow.down.right",
+                        bgcolor: $color("clear")
+                      },
+                      layout: (make, view) => {
+                        make.top.equalTo(5);
+                        make.left.equalTo(15);
+                      },
+                      events: {
+                        tapped: () => {
+                          $device.taptic(1);
+                          $quicklook.open({
+                            image: $("map-image-view").image
+                          });
+                        }
+                      }
+                    }
+                  ]
+                });
+              }
+              views.push({
+                type: "label",
+                props: {
+                  id: "confirmed-label",
+                  textColor: secondaryTextColor,
+                  font: $font(13),
+                  align: $align.center,
+                  lines: 2
+                },
+                layout: (make, view) => {
+                  make.left.right.inset(15);
+                  make.bottom.equalTo(0);
+                  make.height.equalTo(44);
                 }
+              });
+              return views;
+            })()
+          },
+          template: [
+            {
+              type: "label",
+              props: {
+                id: "result-label",
+                font: $font(isTodayWidget ? 13 : 17),
+                textColor: primaryTextColor,
+                lines: 2
               },
-              pulled: refresh
+              layout: (make, view) => {
+                make.left.inset(15);
+                make.right.inset(40);
+                make.centerY.equalTo(view.super);
+              }
+            },
+            {
+              type: "image",
+              props: {
+                symbol: "chevron.right",
+                tintColor: $color("gray")
+              },
+              layout: (make, view) => {
+                make.right.inset(15);
+                make.centerY.equalTo(view.super);
+              }
             }
-          }
-        ]
+          ]
+        },
+        layout: $layout.fill,
+        events: {
+          didSelect: (sender, indexPath, data) => {
+            if (isTodayWidget) {
+              const name = encodeURIComponent($addin.current.name);
+              const url = `jsbox://run?name=${name}`;
+              $app.openURL(url);
+            } else {
+              $ui.push({
+                props: {
+                  title: data.province
+                },
+                views: [
+                  {
+                    type: "list",
+                    props: {
+                      data: data.cities.map(x => `${x.cityName} ${helper.format(x)}`)
+                    },
+                    layout: $layout.fill
+                  }
+                ]
+              });
+            }
+          },
+          pulled: refresh
+        }
       },
       {
         type: "list",
@@ -259,20 +251,48 @@ exports.init = () => {
         layout: $layout.fill,
         events: {
           didSelect: (sender, indexPath, data) => {
-            const link = data.link;
-            $safari.open({
-              url: link
-            });
+            openURL(data.link);
           },
           pulled: refresh
+        }
+      },
+      {
+        type: "web",
+        props: {
+          id: "rumour-view",
+          url: "https://vp.fact.qq.com/home",
+          hidden: true,
+          alpha: 0
+        },
+        layout: $layout.fill,
+        events: {
+          didFinish: async(sender) => {
+            const script =
+            `
+            document.querySelector(".homepage_top").remove();
+            document.querySelector(".content_title").remove();
+            document.querySelector(".bottom").remove();
+            `;
+            await sender.eval(script);
+            sender.alpha = 1;
+          },
+          decideNavigation: (sender, navigation) => {
+            const url = navigation.requestURL;
+            if (url === sender.url) {
+              return true;
+            } else {
+              openURL(url);
+              return false;
+            }
+          }
         }
       }
     ]
   });
 
-  mapView = $("map-view");
   resultView = $("result-view");
   timelineView = $("timeline-view");
+  rumourView = $("rumour-view");
   refresh();
 }
 
@@ -318,4 +338,10 @@ async function refresh() {
 
   resultView.endRefreshing();
   timelineView.endRefreshing();
+}
+
+function openURL(url) {
+  $safari.open({
+    url: url
+  });
 }
