@@ -1,5 +1,6 @@
 const api = "https://3g.dxy.cn/newh5/view/pneumonia";
 const cheerio = require("../libs/cheerio");
+const helper = require("./helper");
 const isTodayWidget = $objc("EnvKit").$isWidgetExtension();
 const isDarkMode = $device.isDarkMode;
 
@@ -52,7 +53,6 @@ exports.init = () => {
               id: "result-view",
               rowHeight: isTodayWidget ? 32 : 44,
               separatorColor: isTodayWidget ? $rgba(100, 100, 100, 0.25) : $color("separator"),
-              selectable: isTodayWidget,
               header: {
                 type: "view",
                 props: {
@@ -175,7 +175,19 @@ exports.init = () => {
                     lines: 2
                   },
                   layout: (make, view) => {
-                    make.left.right.inset(15);
+                    make.left.inset(15);
+                    make.right.inset(40);
+                    make.centerY.equalTo(view.super);
+                  }
+                },
+                {
+                  type: "image",
+                  props: {
+                    symbol: "chevron.right",
+                    tintColor: $color("gray")
+                  },
+                  layout: (make, view) => {
+                    make.right.inset(15);
                     make.centerY.equalTo(view.super);
                   }
                 }
@@ -183,11 +195,26 @@ exports.init = () => {
             },
             layout: $layout.fill,
             events: {
-              tapped: () => {
+              didSelect: (sender, indexPath, data) => {
                 if (isTodayWidget) {
                   const name = encodeURIComponent($addin.current.name);
                   const url = `jsbox://run?name=${name}`;
                   $app.openURL(url);
+                } else {
+                  $ui.push({
+                    props: {
+                      title: data.province
+                    },
+                    views: [
+                      {
+                        type: "list",
+                        props: {
+                          data: data.cities.map(x => `${x.cityName} ${helper.format(x)}`)
+                        },
+                        layout: $layout.fill
+                      }
+                    ]
+                  });
                 }
               },
               pulled: refresh
@@ -253,8 +280,8 @@ async function refresh() {
   const {data} = await $http.get(api);
   const doc = cheerio.load(data);
 
-  const getListByCountryTypeService1 = doc("#getListByCountryTypeService1").html();
-  eval(getListByCountryTypeService1);
+  const getAreaStat = doc("#getAreaStat").html();
+  eval(getAreaStat);
 
   const getTimelineService = doc("#getTimelineService").html();
   eval(getTimelineService);
@@ -265,20 +292,18 @@ async function refresh() {
   const confirmedNumber = doc("p[class^='confirmedNumber']").text();
   $("confirmed-label").text = confirmedNumber;
 
-  const listByCountryTypeService1 = window.getListByCountryTypeService1;
-  resultView.data = listByCountryTypeService1.sort((lhs, rhs) => {
-    return lhs.sort - rhs.sort;
-  }).map(x => {
+  resultView.data = window.getAreaStat.map(x => {
     return {
       "result-label": {
-        "text": `${x.provinceName} ${x.tags}`
-      }
+        "text": helper.format(x)
+      },
+      "province": x.provinceShortName,
+      "cities": x.cities
     }
   });
 
   if (!isTodayWidget) {
-    const timelineService = window.getTimelineService;
-    timelineView.data = timelineService.map(x => {
+    timelineView.data = window.getTimelineService.map(x => {
       return {
         "title-label": {
           "text": x.title
