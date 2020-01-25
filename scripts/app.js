@@ -75,6 +75,7 @@ exports.init = () => {
                   props: {
                     id: "map-image-view",
                     bgcolor: $color("#f3f3f3"),
+                    src: $cache.get("map-image-data"),
                     contentMode: $contentMode.scaleAspectFit
                   },
                   layout: (make, view) => {
@@ -114,6 +115,7 @@ exports.init = () => {
                               timer.invalidate();
                               sender.remove();
                               $("map-image-view").src = dataURL;
+                              $cache.set("map-image-data", dataURL);
                             }
                           }, 200);
                         }
@@ -126,8 +128,7 @@ exports.init = () => {
                         bgcolor: $color("clear")
                       },
                       layout: (make, view) => {
-                        make.top.equalTo(5);
-                        make.left.equalTo(15);
+                        make.left.top.equalTo(5);
                       },
                       events: {
                         tapped: () => {
@@ -260,9 +261,7 @@ exports.init = () => {
         type: "web",
         props: {
           id: "rumour-view",
-          url: "https://vp.fact.qq.com/home",
-          hidden: true,
-          alpha: 0
+          hidden: true
         },
         layout: $layout.fill,
         events: {
@@ -338,6 +337,8 @@ async function refresh() {
 
   resultView.endRefreshing();
   timelineView.endRefreshing();
+  rumourView.alpha = 0;
+  rumourView.url = "https://vp.fact.qq.com/home";
 }
 
 function openURL(url) {

@@ -9,7 +9,7 @@
   },
   "settings": {
     "minSDKVer": "1.60.0",
-    "minOSVer": "13.0.0",
+    "minOSVer": "12.0.0",
     "idleTimerDisabled": false,
     "autoKeyboardEnabled": false,
     "keyboardToolbarEnabled": false,
