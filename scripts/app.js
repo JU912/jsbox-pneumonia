@@ -329,13 +329,29 @@ exports.init = () => {
   resultView = $("result-view");
   timelineView = $("timeline-view");
   rumourView = $("rumour-view");
+
+  const cache = $file.read("assets/cache.html");
+  if (cache) {
+    render(cache.string);
+  }
+  
   refresh();
 }
 
 async function refresh() {
   const {data} = await $http.get(api);
-  const doc = cheerio.load(data);
+  render(data);
 
+  $file.write({
+    data: $data({
+      string: data
+    }),
+    path: "assets/cache.html"
+  });
+}
+
+function render(data) {
+  const doc = cheerio.load(data);
   const getAreaStat = doc("#getAreaStat").html();
   eval(getAreaStat);
 
@@ -360,7 +376,9 @@ async function refresh() {
 
   if (!isTodayWidget) {
     const mapImg = doc("img[class^='mapImg']").attr("src");
-    chartImageView.src = mapImg;
+    if (chartImageView) {
+      chartImageView.src = mapImg;
+    }
 
     timelineView.data = window.getTimelineService.map(x => {
       return {
