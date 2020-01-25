@@ -10,6 +10,8 @@ const secondaryTextColor = (isTodayWidget && isDarkMode) ? $color("gray") : $col
 let resultView = null;
 let timelineView = null;
 let rumourView = null;
+let mapImageView = null;
+let chartImageView = null;
 
 exports.init = () => {
 
@@ -78,27 +80,53 @@ exports.init = () => {
               ];
               if (!isTodayWidget) {
                 views.push({
-                  type: "image",
+                  type: "view",
                   props: {
-                    id: "map-image-view",
-                    bgcolor: $color("#f3f3f3"),
-                    src: $cache.get("map-image-data"),
-                    contentMode: $contentMode.scaleAspectFit
+
                   },
                   layout: (make, view) => {
                     make.left.right.equalTo(0);
                     make.top.equalTo(20);
                     make.height.equalTo(240);
                   },
-                  events: {
-                    tapped: sender => {
-                      $device.taptic(1);
-                      $quicklook.open({
-                        image: sender.image
-                      });
-                    }
-                  },
                   views: [
+                    {
+                      type: "gallery",
+                      props: {
+                        id: "gallery-view",
+                        onColor: $color("#157efb"),
+                        offColor: $color("#cccccc"),
+                        items: [
+                          {
+                            type: "image",
+                            props: {
+                              bgcolor: $color("#f3f3f3"),
+                              src: $cache.get("map-image-data"),
+                              contentMode: $contentMode.scaleAspectFit
+                            },
+                            events: {
+                              ready: sender => {
+                                mapImageView = sender;
+                              },
+                              tapped: openImage
+                            }
+                          },
+                          {
+                            type: "image",
+                            props: {
+                              contentMode: $contentMode.scaleAspectFit
+                            },
+                            events: {
+                              ready: sender => {
+                                chartImageView = sender;
+                              },
+                              tapped: openImage
+                            }
+                          }
+                        ]
+                      },
+                      layout: $layout.fill
+                    },
                     {
                       type: "web",
                       props: {
@@ -121,7 +149,7 @@ exports.init = () => {
                             if (dataURL) {
                               timer.invalidate();
                               sender.remove();
-                              $("map-image-view").src = dataURL;
+                              mapImageView.src = dataURL;
                               $cache.set("map-image-data", dataURL);
                             }
                           }, 200);
@@ -140,8 +168,10 @@ exports.init = () => {
                       events: {
                         tapped: () => {
                           $device.taptic(1);
+                          const selectedIndex = $("gallery-view").index;
+                          const imageView = selectedIndex === 0 ? mapImageView : chartImageView;
                           $quicklook.open({
-                            image: $("map-image-view").image
+                            image: imageView.image
                           });
                         }
                       }
@@ -285,12 +315,11 @@ exports.init = () => {
           },
           decideNavigation: (sender, navigation) => {
             const url = navigation.requestURL;
-            if (url === sender.url) {
-              return true;
-            } else {
+            if (url !== sender.url && !sender.hidden) {
               openURL(url);
               return false;
             }
+            return true;
           }
         }
       }
@@ -330,6 +359,9 @@ async function refresh() {
   });
 
   if (!isTodayWidget) {
+    const mapImg = doc("img[class^='mapImg']").attr("src");
+    chartImageView.src = mapImg;
+
     timelineView.data = window.getTimelineService.map(x => {
       return {
         "title-label": {
@@ -352,5 +384,12 @@ async function refresh() {
 function openURL(url) {
   $safari.open({
     url: url
+  });
+}
+
+function openImage(sender) {
+  $device.taptic(1);
+  $quicklook.open({
+    image: sender.image
   });
 }
