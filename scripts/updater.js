@@ -1,5 +1,4 @@
 exports.check = async() => {
-
   const url = "https://xteko.com/store/fetch?id=151";
   const {data} = await $http.get(url);
   const latestVersion = data.extension.version;

@@ -1,3 +1,17 @@
+exports.openURL = url => {
+  $device.taptic(1);
+  $safari.open({
+    url: url
+  });
+}
+
+exports.openImage = sender => {
+  $device.taptic(1);
+  $quicklook.open({
+    image: sender.image
+  });
+}
+
 exports.format = data => {
   const components = [data.provinceShortName];
   if (data.confirmedCount > 0) {
