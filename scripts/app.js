@@ -37,6 +37,13 @@ exports.init = () => {
             await refresh();
             $ui.toast("刷新成功");
           }
+        },
+        {
+          symbol: "lightbulb",
+          handler: () => {
+            const tips = require("./tips");
+            tips.open();
+          }
         }
       ]
     },
@@ -171,7 +178,7 @@ exports.init = () => {
               },
               layout: (make, view) => {
                 make.left.inset(15);
-                make.right.inset(40);
+                make.right.inset(isTodayWidget ? 15 : 40);
                 make.centerY.equalTo(view.super);
               }
             },
@@ -179,7 +186,8 @@ exports.init = () => {
               type: "image",
               props: {
                 symbol: "chevron.right",
-                tintColor: $color("gray")
+                tintColor: $color("#dddddd"),
+                hidden: isTodayWidget
               },
               layout: (make, view) => {
                 make.right.inset(15);
