@@ -125,7 +125,13 @@ function render(data) {
   const results = parser.parse(data);
   $("ts-label").text = results.mapTitle;
   $("confirmed-label").text = results.confirmedNumber;
-  resultView.data = results.resultViewData;
+
+  const resultViewData = results.resultViewData;
+  resultView.data = resultViewData;
+
+  if (resultViewData == null || resultViewData.length == 0) {
+    $ui.error("刷新失败");
+  }
 
   if (!isTodayWidget) {
     header.setChartViewURL(results.mapImg);
