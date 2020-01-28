@@ -14,7 +14,7 @@ exports.parse = data => {
   const getTimelineService = doc("#getTimelineService").html();
   eval(getTimelineService);
 
-  const mapTitle = doc("div[class^='statistics']").children("div[class^='title']").children("span").text();
+  const mapTitle = doc("div[class^='statistics'] > div[class^='title'] > span").text();
   const mapImg = doc("img[class^='mapImg']").attr("src");
   const confirmedNumber = doc("p[class^='confirmedNumber']").text();
 

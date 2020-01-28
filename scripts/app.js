@@ -58,6 +58,8 @@ exports.init = () => {
         props: {
           id: "result-view",
           rowHeight: isTodayWidget ? 32 : 44,
+          bgcolor: isTodayWidget ? $color("clear") : $color("white"),
+          contentInset: $insets(isTodayWidget ? -69 : 0, 0, 0, 0),
           separatorColor: separatorColor,
           header: header.view,
           stickyHeader: false,

@@ -144,19 +144,27 @@ function webViewDidFinish(sender) {
     `
     (() => {
       const canvas = document.querySelector("canvas");
-      if (canvas) {
-        return canvas.toDataURL("image/png");
+      const mapImg = document.querySelector("img[class^='mapImg']");
+      const statistics = document.querySelector("div[class^='statistics'] > div[class^='title'] > span");
+      if (canvas && mapImg && statistics) {
+        return {
+          mapDataURL: canvas.toDataURL("image/png"),
+          chartDataURL: mapImg.src,
+          statsText: statistics.innerText,
+        };
       } else {
         return null;
       }
     })();
     `;
-    const dataURL = (await sender.eval(script))[0];
-    if (dataURL) {
+    const results = (await sender.eval(script))[0];
+    if (results) {
       timer.invalidate();
       sender.remove();
-      mapImageView.src = dataURL;
-      $cache.set("map-image-data", dataURL);
+      mapImageView.src = results.mapDataURL;
+      chartImageView.src = results.chartDataURL;
+      $("ts-label").text = results.statsText;
+      $cache.set("map-image-data", results.mapDataURL);
     }
   }, 200);
 }
