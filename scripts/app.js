@@ -60,6 +60,7 @@ exports.init = () => {
           rowHeight: isTodayWidget ? 32 : 44,
           separatorColor: separatorColor,
           header: header.view,
+          stickyHeader: false,
           template: templates.resultView
         },
         layout: $layout.fill,
@@ -124,7 +125,7 @@ async function refresh() {
 function render(data) {
   const results = parser.parse(data);
   $("ts-label").text = results.mapTitle;
-  $("confirmed-label").text = results.confirmedNumber;
+  // $("confirmed-label").text = results.confirmedNumber;
 
   const resultViewData = results.resultViewData;
   resultView.data = resultViewData;

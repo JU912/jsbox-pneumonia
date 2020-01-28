@@ -106,27 +106,27 @@ if (!isTodayWidget) {
   });
 }
 
-views.push({
-  type: "label",
-  props: {
-    id: "confirmed-label",
-    textColor: secondaryTextColor,
-    font: $font(13),
-    align: $align.center,
-    lines: 2
-  },
-  layout: (make, view) => {
-    make.left.right.inset(15);
-    make.bottom.equalTo(0);
-    make.height.equalTo(44);
-  }
-});
+// views.push({
+//   type: "label",
+//   props: {
+//     id: "confirmed-label",
+//     textColor: secondaryTextColor,
+//     font: $font(13),
+//     align: $align.center,
+//     lines: 2
+//   },
+//   layout: (make, view) => {
+//     make.left.right.inset(15);
+//     make.bottom.equalTo(0);
+//     make.height.equalTo(44);
+//   }
+// });
 
 exports.view = (() => {
   return {
     type: "view",
     props: {
-      height: isTodayWidget ? 54 : 304
+      height: isTodayWidget ? 0 : 260
     },
     views: views
   };

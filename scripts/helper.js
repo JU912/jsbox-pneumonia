@@ -13,7 +13,7 @@ exports.openImage = sender => {
 }
 
 exports.format = data => {
-  const components = [data.provinceShortName];
+  const components = [data.provinceShortName || data.provinceName];
   if (data.confirmedCount > 0) {
     components.push(`确诊 ${data.confirmedCount}`);
   }
