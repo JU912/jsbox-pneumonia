@@ -59,10 +59,9 @@ exports.init = () => {
           id: "result-view",
           rowHeight: isTodayWidget ? 32 : 44,
           bgcolor: isTodayWidget ? $color("clear") : $color("white"),
-          contentInset: $insets(isTodayWidget ? -69 : 0, 0, 0, 0),
           separatorColor: separatorColor,
           header: header.view,
-          stickyHeader: false,
+          stickyHeader: !isTodayWidget,
           template: templates.resultView
         },
         layout: $layout.fill,
@@ -127,7 +126,7 @@ async function refresh() {
 function render(data) {
   const results = parser.parse(data);
   $("ts-label").text = results.mapTitle;
-  // $("confirmed-label").text = results.confirmedNumber;
+  $("summary-label").text = results.summaryText;
 
   const resultViewData = results.resultViewData;
   resultView.data = resultViewData;
@@ -141,6 +140,11 @@ function render(data) {
     timelineView.data = results.timelineViewData;
     rumourView.alpha = 0;
     rumourView.url = rumourURL;
+  }
+
+  const webView = $("hidden-webview");
+  if (webView) {
+    webView.url = api;
   }
 
   resultView.endRefreshing();

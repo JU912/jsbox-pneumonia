@@ -60,6 +60,7 @@ if (!isTodayWidget) {
             {
               type: "image",
               props: {
+                src: $cache.get("chart-image-data"),
                 contentMode: $contentMode.scaleAspectFit
               },
               events: {
@@ -81,6 +82,7 @@ if (!isTodayWidget) {
       {
         type: "web",
         props: {
+          id: "hidden-webview",
           url: api,
           hidden: true
         },
@@ -106,34 +108,33 @@ if (!isTodayWidget) {
   });
 }
 
-// views.push({
-//   type: "label",
-//   props: {
-//     id: "confirmed-label",
-//     textColor: secondaryTextColor,
-//     font: $font(13),
-//     align: $align.center,
-//     lines: 2
-//   },
-//   layout: (make, view) => {
-//     make.left.right.inset(15);
-//     make.bottom.equalTo(0);
-//     make.height.equalTo(44);
-//   }
-// });
+views.push({
+  type: "label",
+  props: {
+    id: "summary-label",
+    textColor: secondaryTextColor,
+    font: $font(13),
+    align: $align.center
+  },
+  layout: (make, view) => {
+    make.left.right.inset(15);
+    make.bottom.equalTo(0);
+    make.height.equalTo(20);
+  }
+});
 
 exports.view = (() => {
   return {
     type: "view",
     props: {
-      height: isTodayWidget ? 0 : 260
+      height: isTodayWidget ? 36 : 280
     },
     views: views
   };
 })();
 
 exports.setChartViewURL = src => {
-  if (chartImageView) {
+  if (chartImageView && src) {
     chartImageView.src = src;
   }
 }
@@ -160,11 +161,11 @@ function webViewDidFinish(sender) {
     const results = (await sender.eval(script))[0];
     if (results) {
       timer.invalidate();
-      sender.remove();
       mapImageView.src = results.mapDataURL;
       chartImageView.src = results.chartDataURL;
       $("ts-label").text = results.statsText;
       $cache.set("map-image-data", results.mapDataURL);
+      $cache.set("chart-image-data", results.chartDataURL);
     }
   }, 200);
 }
