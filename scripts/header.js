@@ -144,13 +144,13 @@ function webViewDidFinish(sender) {
     const script =
     `
     (() => {
-      const canvas = document.querySelector("canvas");
-      const mapImg = document.querySelector("img[class^='mapImg']");
+      const mapImage = document.querySelector("div[class^='mapImg'] > img");
+      const chartImage = document.querySelector("img[class^='mapImg']");
       const statistics = document.querySelector("div[class^='statistics'] > div[class^='title'] > span");
-      if (canvas && mapImg && statistics) {
+      if (chartImage && statistics) {
         return {
-          mapDataURL: canvas.toDataURL("image/png"),
-          chartDataURL: mapImg.src,
+          mapDataURL: mapImage.src,
+          chartDataURL: chartImage.src,
           statsText: statistics.innerText,
         };
       } else {
