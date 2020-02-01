@@ -145,11 +145,12 @@ function webViewDidFinish(sender) {
     `
     (() => {
       const mapImage = document.querySelector("div[class^='mapImg'] > img");
+      const canvas = document.querySelector("canvas");
       const chartImage = document.querySelector("img[class^='mapImg']");
       const statistics = document.querySelector("div[class^='statistics'] > div[class^='title'] > span");
-      if (chartImage && statistics) {
+      if ((mapImage || canvas) && chartImage && statistics) {
         return {
-          mapDataURL: mapImage.src,
+          mapDataURL: mapImage ? mapImage.src : canvas.toDataURL("image/png"),
           chartDataURL: chartImage.src,
           statsText: statistics.innerText,
         };
