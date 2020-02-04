@@ -102,25 +102,12 @@ exports.init = () => {
   resultView = $("result-view");
   timelineView = $("timeline-view");
   rumourView = $("rumour-view");
-
-  const cache = $file.read("assets/cache.html");
-  if (cache) {
-    render(cache.string);
-  }
-  
   refresh();
 }
 
 async function refresh() {
   const {data} = await $http.get(api);
   render(data);
-
-  $file.write({
-    data: $data({
-      string: data
-    }),
-    path: "assets/cache.html"
-  });
 }
 
 function render(data) {

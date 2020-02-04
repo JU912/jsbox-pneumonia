@@ -46,7 +46,6 @@ if (!isTodayWidget) {
             {
               type: "image",
               props: {
-                bgcolor: $color("#f3f3f3"),
                 src: $cache.get("map-image-data"),
                 contentMode: $contentMode.scaleAspectFit
               },
