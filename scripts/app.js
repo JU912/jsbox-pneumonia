@@ -123,7 +123,6 @@ function render(data) {
   }
 
   if (!isTodayWidget) {
-    header.setChartViewURL(results.mapImg);
     timelineView.data = results.timelineViewData;
     rumourView.alpha = 0;
     rumourView.url = rumourURL;

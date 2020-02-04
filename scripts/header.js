@@ -9,7 +9,11 @@ const {
 
 let galleryView = null;
 let mapImageView = null;
-let chartImageView = null;
+let chartImageView1 = null;
+let chartImageView2 = null;
+let chartImageView3 = null;
+let chartImageView4 = null;
+let chartImageView5 = null;
 
 const views = [
   {
@@ -29,6 +33,22 @@ const views = [
 ];
 
 if (!isTodayWidget) {
+
+  const imageCache = $cache.get("chart-image-urls") || [];
+  const createImageView = (index, ready) => {
+    return {
+      type: "image",
+      props: {
+        src: imageCache[index],
+        contentMode: $contentMode.scaleAspectFit
+      },
+      events: {
+        ready: ready,
+        tapped: helper.openImage
+      }
+    }
+  }
+
   views.push({
     type: "view",
     layout: (make, view) => {
@@ -46,7 +66,7 @@ if (!isTodayWidget) {
             {
               type: "image",
               props: {
-                src: $cache.get("map-image-data"),
+                src: $cache.get("map-image-url"),
                 contentMode: $contentMode.scaleAspectFit
               },
               events: {
@@ -56,19 +76,11 @@ if (!isTodayWidget) {
                 tapped: helper.openImage
               }
             },
-            {
-              type: "image",
-              props: {
-                src: $cache.get("chart-image-data"),
-                contentMode: $contentMode.scaleAspectFit
-              },
-              events: {
-                ready: sender => {
-                  chartImageView = sender;
-                },
-                tapped: helper.openImage
-              }
-            }
+            createImageView(0, sender => chartImageView1 = sender),
+            createImageView(1, sender => chartImageView2 = sender),
+            createImageView(2, sender => chartImageView3 = sender),
+            createImageView(3, sender => chartImageView4 = sender),
+            createImageView(4, sender => chartImageView5 = sender),
           ]
         },
         layout: $layout.fill,
@@ -88,19 +100,6 @@ if (!isTodayWidget) {
         layout: $layout.fill,
         events: {
           didFinish: webViewDidFinish
-        }
-      },
-      {
-        type: "button",
-        props: {
-          symbol: "arrow.up.left.and.arrow.down.right",
-          bgcolor: $color("clear")
-        },
-        layout: (make, view) => {
-          make.left.top.equalTo(5);
-        },
-        events: {
-          tapped: enlargeButtonTapped
         }
       }
     ]
@@ -132,12 +131,6 @@ exports.view = (() => {
   };
 })();
 
-exports.setChartViewURL = src => {
-  if (chartImageView && src) {
-    chartImageView.src = src;
-  }
-}
-
 function webViewDidFinish(sender) {
   const timer = setInterval(async() => {
     const script =
@@ -145,12 +138,12 @@ function webViewDidFinish(sender) {
     (() => {
       const mapImage = document.querySelector("div[class^='mapImg'] > img");
       const canvas = document.querySelector("canvas");
-      const chartImage = document.querySelector("img[class^='mapImg']");
+      const chartImages = document.querySelectorAll("img[class^='mapImg']");
       const statistics = document.querySelector("div[class^='statistics'] > div[class^='title'] > span");
-      if ((mapImage || canvas) && chartImage && statistics) {
+      if ((mapImage || canvas) && chartImages && statistics) {
         return {
           mapDataURL: mapImage ? mapImage.src : canvas.toDataURL("image/png"),
-          chartDataURL: chartImage.src,
+          chartDataURLs: [...chartImages].map(x => x.src),
           statsText: statistics.innerText,
         };
       } else {
@@ -162,16 +155,22 @@ function webViewDidFinish(sender) {
     if (results) {
       timer.invalidate();
       mapImageView.src = results.mapDataURL;
-      chartImageView.src = results.chartDataURL;
+      chartImageViews().forEach((view, index) => {
+        view.src = results.chartDataURLs[index];
+      });
       $("ts-label").text = results.statsText;
-      $cache.set("map-image-data", results.mapDataURL);
-      $cache.set("chart-image-data", results.chartDataURL);
+      $cache.set("map-image-url", results.mapDataURL);
+      $cache.set("chart-image-urls", results.chartDataURLs);
     }
   }, 200);
 }
 
-function enlargeButtonTapped() {
-  const index = galleryView.index;
-  const imageView = index === 0 ? mapImageView : chartImageView;
-  helper.openImage(imageView);
+function chartImageViews() {
+  return [
+    chartImageView1,
+    chartImageView2,
+    chartImageView3,
+    chartImageView4,
+    chartImageView5,
+  ];
 }
