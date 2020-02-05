@@ -7,13 +7,13 @@ const {
   secondaryTextColor,
 } = constants;
 
-let galleryView = null;
 let mapImageView = null;
 let chartImageView1 = null;
 let chartImageView2 = null;
 let chartImageView3 = null;
 let chartImageView4 = null;
 let chartImageView5 = null;
+let chartImageView6 = null;
 
 const views = [
   {
@@ -81,14 +81,10 @@ if (!isTodayWidget) {
             createImageView(2, sender => chartImageView3 = sender),
             createImageView(3, sender => chartImageView4 = sender),
             createImageView(4, sender => chartImageView5 = sender),
+            createImageView(5, sender => chartImageView6 = sender),
           ]
         },
-        layout: $layout.fill,
-        events: {
-          ready: sender => {
-            galleryView = sender;
-          }
-        }
+        layout: $layout.fill
       },
       {
         type: "web",
@@ -172,5 +168,6 @@ function chartImageViews() {
     chartImageView3,
     chartImageView4,
     chartImageView5,
+    chartImageView6,
   ];
 }
